@@ -33,6 +33,7 @@
   .card { background: var(--card); border-radius: 12px; padding: 4px 14px; }
   .f { padding: 12px 0; border-bottom: 1px solid var(--line); }
   .f:last-child { border-bottom: 0; }
+  .note { font-size: 13px; color: var(--text); background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 9px; padding: 9px 11px; margin: 10px 0 2px; border-bottom: 0; }
   .lbl { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-weight: 600; }
   .tag { font-size: 11px; font-weight: 600; color: var(--link); background: color-mix(in srgb, var(--link) 12%, transparent);
     padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
@@ -84,6 +85,7 @@
 
   <div class="group-title">В закупку</div>
   <div class="card">
+    <div class="f note">🥐 Выпечку (круассаны, тарты, булки и т.п.) в эти три поля не пишем. По выпечке бар указывает только остатки в поле «Выпечка», заказ решает Алёна.</div>
     <div class="f"><div class="lbl">На стопе <span class="tag">→ заявка</span></div>
       <div class="hint">Чего нет совсем. Сразу уходит в заказ. Через запятую или с новой строки. Пример: <span class="ex" data-k="микрозелень, авокадо" data-b="декаф, овсяное молоко">микрозелень, авокадо</span></div>
       <textarea data-k="stop" rows="1"></textarea></div>
@@ -98,7 +100,7 @@
   <div class="group-title">Смена</div>
   <div class="card">
     <div class="f b-only"><div class="lbl">Выпечка: сколько осталось</div>
-      <div class="hint">Остаток на витрине, штук. Пример: шу 2, пирог 5, трубочки 4</div>
+      <div class="hint">Остаток на витрине, штук. Заказывать выпечку не нужно: Алёна решит по остаткам. Пример: шу 2, пирог 5, трубочки 4</div>
       <textarea data-k="pastry" rows="1"></textarea></div>
 
     <div class="f k-only"><div class="lbl">Заготовки на утро</div>
