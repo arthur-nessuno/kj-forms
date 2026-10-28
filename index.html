@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Отчёт смены · Kartli Joys</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-secondary-bg-color, #f2f2f6);
+    --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
+    --text: var(--tg-theme-text-color, #1c1c1e);
+    --hint: var(--tg-theme-hint-color, #8a8a8e);
+    --accent: var(--tg-theme-button-color, #99b074);
+    --accent-text: var(--tg-theme-button-text-color, #ffffff);
+    --link: var(--tg-theme-link-color, #6f8f4a);
+    --line: color-mix(in srgb, var(--hint) 28%, transparent);
+    --field: color-mix(in srgb, var(--hint) 9%, var(--card));
+    --danger: var(--tg-theme-destructive-text-color, #d64545);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 12px 12px 120px; }
+  header { padding: 6px 4px 12px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.2px; }
+  .sub { color: var(--hint); font-size: 14px; margin-top: 2px; }
+  .tabs { display: flex; background: var(--field); border-radius: 10px; padding: 3px; margin: 4px 0 14px; }
+  .tabs button { flex: 1; border: 0; background: transparent; color: var(--text); font: inherit; font-weight: 600;
+    padding: 8px 0; border-radius: 8px; cursor: pointer; }
+  .tabs button.on { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .group-title { color: var(--hint); font-size: 13px; text-transform: uppercase; letter-spacing: .4px; margin: 18px 6px 6px; }
+  .card { background: var(--card); border-radius: 12px; padding: 4px 14px; }
+  .f { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .f:last-child { border-bottom: 0; }
+  .lbl { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-weight: 600; }
+  .tag { font-size: 11px; font-weight: 600; color: var(--link); background: color-mix(in srgb, var(--link) 12%, transparent);
+    padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
+  .tag.warn { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+  .hint { color: var(--hint); font-size: 13px; margin: 3px 0 8px; }
+  textarea, input[type=text] { width: 100%; border: 1px solid transparent; background: var(--field); color: var(--text);
+    font: inherit; border-radius: 9px; padding: 9px 11px; outline: none; resize: none; }
+  textarea { min-height: 42px; overflow: hidden; }
+  textarea:focus, input[type=text]:focus { border-color: var(--accent); }
+  .chips { display: flex; gap: 6px; margin-top: 7px; flex-wrap: wrap; }
+  .chip { border: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; font-size: 13px;
+    border-radius: 20px; padding: 4px 11px; cursor: pointer; }
+  .preps { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .prep span { display: block; font-size: 13px; color: var(--hint); margin-bottom: 4px; }
+  .seg { display: flex; gap: 6px; }
+  .seg button { flex: 1; border: 1px solid var(--line); background: var(--field); color: var(--text); font: inherit;
+    padding: 8px 0; border-radius: 9px; cursor: pointer; }
+  .seg button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .k-only, .b-only { display: none; }
+  body.kitchen .k-only, body.bar .b-only { display: block; }
+  .foot { display: flex; justify-content: space-between; align-items: center; margin: 14px 6px; color: var(--hint); font-size: 13px; }
+  .foot button { border: 0; background: none; color: var(--link); font: inherit; font-size: 13px; cursor: pointer; padding: 0; }
+  #send { display: none; width: 100%; margin-top: 10px; border: 0; border-radius: 12px; padding: 14px; font: inherit; font-weight: 600;
+    background: var(--accent); color: var(--accent-text); cursor: pointer; }
+  body.web #send { display: block; }
+  .banner { display: none; background: color-mix(in srgb, var(--danger) 12%, var(--card)); color: var(--text); border-radius: 12px;
+    padding: 10px 14px; margin-bottom: 12px; font-size: 14px; }
+  .banner.show { display: block; }
+  .done { display: none; text-align: center; padding: 60px 20px; }
+  .done .big { font-size: 54px; }
+  .done h2 { margin: 10px 0 6px; }
+  body.sent main > *:not(.done) { display: none; }
+  body.sent .done { display: block; }
+</style>
+</head>
+<body class="kitchen">
+<main>
+  <header>
+    <h1 id="title">Отчёт смены</h1>
+    <div class="sub" id="sub">Kartli Joys</div>
+  </header>
+
+  <div class="banner" id="err"></div>
+
+  <div class="tabs" role="tablist">
+    <button type="button" data-shop="b">Бар</button>
+    <button type="button" data-shop="k">Кухня</button>
+  </div>
+
+  <div class="group-title">В закупку</div>
+  <div class="card">
+    <div class="f"><div class="lbl">На стопе <span class="tag">→ заявка</span></div>
+      <div class="hint">Чего нет совсем. Через запятую или с новой строки. Пример: микрозелень, овсяное молоко</div>
+      <textarea data-k="stop" rows="1"></textarea></div>
+    <div class="f"><div class="lbl">Мало <span class="tag">→ заявка</span></div>
+      <div class="hint">Что заканчивается. Только названия, без остатка. Пример: лабне, фета. Сколько заказать, пишите в «Надо».</div>
+      <textarea data-k="low" rows="1"></textarea></div>
+    <div class="f"><div class="lbl">Надо <span class="tag">→ заявка</span></div>
+      <div class="hint">Что заказать или купить, можно с количеством. Пример: яйца 60, сметана 2</div>
+      <textarea data-k="need" rows="1"></textarea></div>
+  </div>
+
+  <div class="group-title">Смена</div>
+  <div class="card">
+    <div class="f b-only"><div class="lbl">Выпечка: сколько осталось</div>
+      <div class="hint">Остаток на витрине, штук. Пример: шу 2, пирог 5, трубочки 4</div>
+      <textarea data-k="pastry" rows="1"></textarea></div>
+
+    <div class="f k-only"><div class="lbl">Заготовки на утро</div>
+      <div class="hint">Сколько готово к утру. Пустое поле значит «не проверяли».</div>
+      <div class="preps">
+        <label class="prep"><span>Пашоты, шт</span><input type="text" inputmode="decimal" data-k="pashot"></label>
+        <label class="prep"><span>Сырники, порций</span><input type="text" inputmode="decimal" data-k="syr"></label>
+        <label class="prep"><span>Томатка, контейнеров</span><input type="text" inputmode="decimal" data-k="tomat"></label>
+        <label class="prep"><span>Перцы, контейнеров</span><input type="text" inputmode="decimal" data-k="perc"></label>
+      </div>
+      <div class="prep" style="margin-top:10px"><span>Голландез</span>
+        <div class="seg" data-seg="holl"><button type="button">есть</button><button type="button">мало</button><button type="button">нет</button></div>
+      </div>
+    </div>
+    <div class="f k-only"><div class="lbl">Сделать с утра</div>
+      <div class="hint">Что первым делом сделать утренней смене. Пример: голландез, пашоты</div>
+      <textarea data-k="morning" rows="1"></textarea></div>
+
+    <div class="f"><div class="lbl">Списание</div>
+      <div class="hint">Что, сколько и почему. Пример: тарт 1 (срок), вафля 2 (брак)</div>
+      <textarea data-k="wo" rows="1"></textarea></div>
+    <div class="f k-only"><div class="lbl">Стафф</div>
+      <div class="hint">Что съели сотрудники. Пример: драники 1, скрембл 1</div>
+      <textarea data-k="staff" rows="1"></textarea></div>
+    <div class="f"><div class="lbl">Уборка</div>
+      <div class="hint">Обычная уборка: «база». Если сделали больше, допишите.</div>
+      <textarea data-k="clean" rows="1"></textarea>
+      <div class="chips"><button type="button" class="chip" data-fill="clean" data-val="база">база</button></div></div>
+  </div>
+
+  <div class="group-title">Важно</div>
+  <div class="card">
+    <div class="f"><div class="lbl">Сломалось / не работает <span class="tag warn">→ управляющим</span></div>
+      <div class="hint">Что не работает или работает плохо. Это сразу увидят управляющие. Для ремонта отдельно оформите #поломка с фото.</div>
+      <textarea data-k="broken" rows="1"></textarea></div>
+    <div class="f"><div class="lbl">Комментарии</div>
+      <div class="hint">Как прошла смена, отзывы гостей, что важно знать следующей смене.</div>
+      <textarea data-k="comment" rows="1"></textarea></div>
+  </div>
+
+  <div class="foot"><span id="saved">Черновик сохраняется автоматически</span><button type="button" id="clear">Очистить</button></div>
+  <button type="button" id="send">Отправить отчёт</button>
+
+  <div class="done">
+    <div class="big">✅</div>
+    <h2>Отчёт отправлен</h2>
+    <div class="sub" id="doneText"></div>
+  </div>
+</main>
+
+<script>
+(function () {
+  // Адрес веб-приложения бота (Apps Script). Секретов здесь нет: отправку проверяет подпись Telegram.
+  var API = 'https://script.google.com/macros/s/AKfycbzqFtHFUiq5gBqLP6mQZD12WJ42y5o_6JLZaGUH7f8blIfLOqcHKQ00-o66FJhYeAIK/exec';
+
+  var tg = window.Telegram && window.Telegram.WebApp;
+  var inTg = !!(tg && tg.initData);
+  var qs = new URLSearchParams(location.search);
+  var start = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || qs.get('s') || '';
+  var shop = /_b$/.test(start) ? 'b' : 'k';
+  var pointName = '';
+  var sending = false;
+  var today = new Date();
+  var dayKey = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  if (tg) { try { tg.ready(); tg.expand(); } catch (e) {} }
+  if (!inTg) document.body.classList.add('web');
+
+  function store() { try { return window.localStorage; } catch (e) { return null; } }
+  function draftKey() { return 'kj-report:' + start + ':' + shop + ':' + dayKey; }
+
+  function fields() {
+    var o = {};
+    $$('[data-k]').forEach(function (el) {
+      var box = el.closest('.k-only, .b-only');
+      if (box && getComputedStyle(box).display === 'none') return;
+      o[el.dataset.k] = el.value.trim();
+    });
+    var on = $('[data-seg="holl"] button.on');
+    if (shop === 'k') o.holl = on ? on.textContent : '';
+    return o;
+  }
+  function isEmpty(o) { return Object.keys(o).every(function (k) { return !o[k]; }); }
+
+  function grow(el) { if (el.tagName === 'TEXTAREA') { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } }
+
+  function save() {
+    var s = store(); if (!s) return;
+    var all = {};
+    $$('[data-k]').forEach(function (el) { all[el.dataset.k] = el.value; });
+    var on = $('[data-seg="holl"] button.on'); all.holl = on ? on.textContent : '';
+    try { s.setItem(draftKey(), JSON.stringify(all)); } catch (e) {}
+    if (tg && tg.enableClosingConfirmation) { try { isEmpty(fields()) ? tg.disableClosingConfirmation() : tg.enableClosingConfirmation(); } catch (e) {} }
+  }
+  function load() {
+    var s = store(), d = null;
+    try { d = s && JSON.parse(s.getItem(draftKey()) || 'null'); } catch (e) {}
+    $$('[data-k]').forEach(function (el) { el.value = d && d[el.dataset.k] || ''; grow(el); });
+    $$('[data-seg="holl"] button').forEach(function (b) { b.classList.toggle('on', !!d && d.holl === b.textContent); });
+  }
+
+  var ready = false;
+  function setShop(s) {
+    if (ready) save();
+    ready = true;
+    shop = s;
+    document.body.classList.toggle('kitchen', s === 'k');
+    document.body.classList.toggle('bar', s === 'b');
+    $$('.tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.shop === s); });
+    $('#title').textContent = s === 'k' ? 'Отчёт кухни' : 'Отчёт бара';
+    load();
+    requestAnimationFrame(function () { $$('textarea').forEach(grow); });
+  }
+
+  function subline() {
+    var d = today.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+    $('#sub').textContent = (pointName ? pointName + ' · ' : '') + d;
+  }
+
+  function showErr(t) { var b = $('#err'); b.textContent = t || ''; b.classList.toggle('show', !!t); if (t) window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+  function setBusy(on) {
+    sending = on;
+    if (tg && tg.MainButton) { try { on ? tg.MainButton.showProgress() : tg.MainButton.hideProgress(); } catch (e) {} }
+    $('#send').disabled = on; $('#send').textContent = on ? 'Отправляю…' : 'Отправить отчёт';
+  }
+
+  function nonce() {
+    var s = store(), k = draftKey() + ':nonce', n = s && s.getItem(k);
+    if (!n) { n = Date.now().toString(36) + Math.random().toString(36).slice(2, 10); if (s) try { s.setItem(k, n); } catch (e) {} }
+    return n;
+  }
+
+  function doSend() {
+    if (sending) return;
+    if (!inTg) { showErr('Форму нужно открыть кнопкой «Отчёт бара» / «Отчёт кухни» в чате точки.'); return; }
+    showErr('');
+    setBusy(true);
+    var body = JSON.stringify({ kind: 'kjform', initData: tg.initData, shop: shop, fields: fields(), nonce: nonce() });
+    fetch(API, { method: 'POST', body: body, redirect: 'follow' })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        setBusy(false);
+        if (!res || !res.ok) { showErr((res && res.error) || 'Не получилось отправить. Попробуйте ещё раз.'); return; }
+        var s = store(); if (s) try { s.removeItem(draftKey()); s.removeItem(draftKey() + ':nonce'); } catch (e) {}
+        try { tg.disableClosingConfirmation(); } catch (e) {}
+        $('#doneText').textContent = 'Отчёт появился в чате ' + (res.point || 'точки') + '.' +
+          (res.items ? ' В закупку ушло позиций: ' + res.items + '.' : '');
+        document.body.classList.add('sent');
+        try { tg.MainButton.hide(); tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+        setTimeout(function () { try { tg.close(); } catch (e) {} }, 2200);
+      })
+      .catch(function () { setBusy(false); showErr('Нет связи с ботом. Проверьте интернет и нажмите «Отправить» ещё раз, введённое сохранено.'); });
+  }
+
+  function submit() {
+    if (isEmpty(fields())) {
+      var q = 'Все поля пустые. Отправить отчёт «Без замечаний»?';
+      if (tg && tg.showConfirm && inTg) { try { tg.showConfirm(q, function (ok) { if (ok) doSend(); }); return; } catch (e) {} }
+      if (!window.confirm(q)) return;
+    }
+    doSend();
+  }
+
+  // события
+  $$('.tabs button').forEach(function (b) { b.addEventListener('click', function () { setShop(b.dataset.shop); }); });
+  document.addEventListener('input', function (e) { if (e.target.dataset && e.target.dataset.k) { grow(e.target); save(); } });
+  $$('[data-seg] button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var was = b.classList.contains('on');
+      $$('[data-seg="' + b.parentNode.dataset.seg + '"] button').forEach(function (x) { x.classList.remove('on'); });
+      if (!was) b.classList.add('on');
+      save();
+    });
+  });
+  $$('[data-fill]').forEach(function (c) {
+    c.addEventListener('click', function () {
+      var el = $('[data-k="' + c.dataset.fill + '"]');
+      el.value = el.value.trim() ? el.value.trim() + ', ' + c.dataset.val : c.dataset.val;
+      grow(el); save();
+    });
+  });
+  $('#clear').addEventListener('click', function () {
+    var go = function () { $$('[data-k]').forEach(function (el) { el.value = ''; grow(el); }); $$('[data-seg] button').forEach(function (x) { x.classList.remove('on'); }); save(); };
+    if (tg && tg.showConfirm && inTg) { try { tg.showConfirm('Очистить все поля?', function (ok) { if (ok) go(); }); return; } catch (e) {} }
+    if (window.confirm('Очистить все поля?')) go();
+  });
+  $('#send').addEventListener('click', submit);
+  if (tg && tg.MainButton && inTg) {
+    try {
+      tg.MainButton.setParams({ text: 'Отправить отчёт', is_visible: true });
+      tg.MainButton.onClick(submit);
+    } catch (e) { document.body.classList.add('web'); }
+  }
+
+  setShop(shop);
+  subline();
+  if (!inTg) showErr('Это предпросмотр. Отправлять отчёт можно только из Telegram, кнопкой в чате точки.');
+
+  // название точки для шапки
+  if (start) {
+    fetch(API + '?a=cfg&s=' + encodeURIComponent(start))
+      .then(function (r) { return r.json(); })
+      .then(function (c) { if (c && c.ok) { pointName = c.point; subline(); } })
+      .catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>
