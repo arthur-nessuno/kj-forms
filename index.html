@@ -62,6 +62,8 @@
   .banner { display: none; background: color-mix(in srgb, var(--danger) 12%, var(--card)); color: var(--text); border-radius: 12px;
     padding: 10px 14px; margin-bottom: 12px; font-size: 14px; }
   .banner.show { display: block; }
+  .banner.info { background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
+  body.loading .tabs, body.loading .card, body.loading .foot { opacity: .45; pointer-events: none; }
   .done { display: none; text-align: center; padding: 60px 20px; }
   .done .big { font-size: 54px; }
   .done h2 { margin: 10px 0 6px; }
@@ -77,6 +79,7 @@
   </header>
 
   <div class="banner" id="err"></div>
+  <div class="banner info" id="info"></div>
 
   <div class="tabs" role="tablist">
     <button type="button" data-shop="b">Бар</button>
@@ -90,7 +93,7 @@
       <div class="hint">Чего нет совсем. Сразу уходит в заказ. Через запятую или с новой строки. Пример: <span class="ex" data-k="микрозелень, авокадо" data-b="декаф, овсяное молоко">микрозелень, авокадо</span></div>
       <textarea data-k="stop" rows="1"></textarea></div>
     <div class="f"><div class="lbl">Мало <span class="tag">→ заявка</span></div>
-      <div class="hint">Что заканчивается. Тоже сразу уходит в заказ. Только названия, без остатка. Пример: <span class="ex" data-k="лабне, фета" data-b="апельсины, тоник">лабне, фета</span></div>
+      <div class="hint">Что заканчивается. Тоже сразу уходит в заказ. Остаток, если знаете, пишите в скобках. Пример: <span class="ex" data-k="лабне (осталось 1), фета" data-b="апельсины (осталось 3), тоник">лабне (осталось 1), фета</span></div>
       <textarea data-k="low" rows="1"></textarea></div>
     <div class="f"><div class="lbl">Дополнительно <span class="tag">→ заявка</span></div>
       <div class="hint">Что ещё заказать сверх стопа и «мало»: продукты под заготовки, хозтовары, расходники. То, что уже записано на стопе или в «мало», сюда не повторяйте. Если больше ничего не нужно, оставьте поле пустым. Пример: <span class="ex" data-k="творог 3 кг под сырники, батарейки для весов" data-b="тыква 2 кг под пюре, губки для бара">творог 3 кг под сырники, батарейки для весов</span></div>
@@ -146,7 +149,7 @@
 
   <div class="done">
     <div class="big">✅</div>
-    <h2>Отчёт отправлен</h2>
+    <h2 id="doneTitle">Отчёт отправлен</h2>
     <div class="sub" id="doneText"></div>
   </div>
 </main>
@@ -163,6 +166,8 @@
   var shop = /_b$/.test(start) ? 'b' : 'k';
   var pointName = '';
   var sending = false;
+  var reports = {};          // сегодняшние отчёты бара (b) и кухни (k) из бота
+  var loaded = !inTg;
   var today = new Date();
   var dayKey = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
   var $ = function (s) { return document.querySelector(s); };
@@ -172,7 +177,9 @@
   if (!inTg) document.body.classList.add('web');
 
   function store() { try { return window.localStorage; } catch (e) { return null; } }
-  function draftKey() { return 'kj-report:' + start + ':' + shop + ':' + dayKey; }
+  // Отчёт, который сейчас исправляем (если он есть и его ещё можно править)
+  function editing() { var r = reports[shop]; return r && r.editable ? r : null; }
+  function draftKey() { var r = editing(); return r ? 'kj-edit:' + start + ':' + r.msg : 'kj-report:' + start + ':' + shop + ':' + dayKey; }
 
   function fields() {
     var o = {};
@@ -200,6 +207,7 @@
   function load() {
     var s = store(), d = null;
     try { d = s && JSON.parse(s.getItem(draftKey()) || 'null'); } catch (e) {}
+    if (!d && editing()) d = editing().fields;
     $$('[data-k]').forEach(function (el) { el.value = d && d[el.dataset.k] || ''; grow(el); });
     $$('[data-seg="holl"] button').forEach(function (b) { b.classList.toggle('on', !!d && d.holl === b.textContent); });
   }
@@ -215,7 +223,21 @@
     $('#title').textContent = s === 'k' ? 'Отчёт кухни' : 'Отчёт бара';
     $$('.ex').forEach(function (e) { e.textContent = s === 'k' ? e.dataset.k : e.dataset.b; });
     load();
+    modeUi();
     requestAnimationFrame(function () { $$('textarea').forEach(grow); });
+  }
+
+  function btnText() { return editing() ? 'Сохранить исправления' : 'Отправить отчёт'; }
+  function modeUi() {
+    var r = reports[shop], box = $('#info'), t = '';
+    var who = shop === 'k' ? 'кухни' : 'бара';
+    if (r && r.editable) t = '✏️ Отчёт ' + who + ' за сегодня уже отправлен в ' + r.at + (r.author ? ' (' + r.author + ')' : '') +
+      '. Сейчас вы его исправляете: после сохранения бот обновит отчёт в чате и заявку.';
+    else if (r) t = 'Отчёт ' + who + ' за сегодня уже отправлен в ' + r.at + (r.author ? ' (' + r.author + ')' : '') + '. ' + r.reason +
+      ' Исправления напишите ответом на карточку заявки. При необходимости можно отправить ещё один отчёт.';
+    box.textContent = t; box.classList.toggle('show', !!t);
+    $('#send').textContent = btnText();
+    if (tg && tg.MainButton && inTg) { try { tg.MainButton.setParams({ text: btnText() }); } catch (e) {} }
   }
 
   function subline() {
@@ -228,7 +250,7 @@
   function setBusy(on) {
     sending = on;
     if (tg && tg.MainButton) { try { on ? tg.MainButton.showProgress() : tg.MainButton.hideProgress(); } catch (e) {} }
-    $('#send').disabled = on; $('#send').textContent = on ? 'Отправляю…' : 'Отправить отчёт';
+    $('#send').disabled = on; $('#send').textContent = on ? 'Отправляю…' : btnText();
   }
 
   function nonce() {
@@ -238,20 +260,31 @@
   }
 
   function doSend() {
-    if (sending) return;
+    if (sending || !loaded) return;
     if (!inTg) { showErr('Форму нужно открыть кнопкой «Отчёт бара» / «Отчёт кухни» в чате точки.'); return; }
     showErr('');
     setBusy(true);
-    var body = JSON.stringify({ kind: 'kjform', initData: tg.initData, shop: shop, fields: fields(), nonce: nonce() });
+    var ed = editing();
+    var body = JSON.stringify({ kind: 'kjform', initData: tg.initData, shop: shop, fields: fields(), nonce: nonce(), edit: ed ? ed.msg : 0 });
     fetch(API, { method: 'POST', body: body, redirect: 'follow' })
       .then(function (r) { return r.json(); })
       .then(function (res) {
         setBusy(false);
-        if (!res || !res.ok) { showErr((res && res.error) || 'Не получилось отправить. Попробуйте ещё раз.'); return; }
+        if (!res || !res.ok) {
+          showErr((res && res.error) || 'Не получилось отправить. Попробуйте ещё раз.');
+          if (res && res.locked && reports[shop]) { reports[shop].editable = false; reports[shop].reason = ''; modeUi(); }
+          return;
+        }
         var s = store(); if (s) try { s.removeItem(draftKey()); s.removeItem(draftKey() + ':nonce'); } catch (e) {}
         try { tg.disableClosingConfirmation(); } catch (e) {}
-        $('#doneText').textContent = 'Отчёт появился в чате ' + (res.point || 'точки') + '.' +
-          (res.items ? ' В закупку ушло позиций: ' + res.items + '.' : '');
+        if (res.edited) {
+          $('#doneTitle').textContent = 'Отчёт исправлен';
+          $('#doneText').textContent = 'Отчёт в чате ' + (res.point || 'точки') + ' обновлён.' +
+            (res.added || res.removed ? ' В заявке добавлено позиций: ' + (res.added || 0) + ', убрано: ' + (res.removed || 0) + '.' : '');
+        } else {
+          $('#doneText').textContent = 'Отчёт появился в чате ' + (res.point || 'точки') + '.' +
+            (res.items ? ' В закупку ушло позиций: ' + res.items + '.' : '');
+        }
         document.body.classList.add('sent');
         try { tg.MainButton.hide(); tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
         setTimeout(function () { try { tg.close(); } catch (e) {} }, 2200);
@@ -303,8 +336,27 @@
   subline();
   if (!inTg) showErr('Это предпросмотр. Отправлять отчёт можно только из Telegram, кнопкой в чате точки.');
 
-  // название точки для шапки
-  if (start) {
+  // Сегодняшние отчёты этой точки: если отчёт уже отправлен, форма откроется для исправления
+  function finishLoad() {
+    if (loaded) return;
+    loaded = true;
+    document.body.classList.remove('loading');
+    subline();
+    load(); modeUi();
+    requestAnimationFrame(function () { $$('textarea').forEach(grow); });
+  }
+  if (inTg) {
+    document.body.classList.add('loading');
+    $('#sub').textContent = 'Проверяю отчёты за сегодня…';
+    setTimeout(finishLoad, 9000);
+    fetch(API, { method: 'POST', body: JSON.stringify({ kind: 'kjload', initData: tg.initData }), redirect: 'follow' })
+      .then(function (r) { return r.json(); })
+      .then(function (res) { if (res && res.ok) { pointName = res.point || ''; reports = res.reports || {}; } else if (res && res.error) showErr(res.error); finishLoad(); })
+      .catch(function () { finishLoad(); });
+  }
+
+  // название точки для шапки (предпросмотр вне Telegram)
+  if (start && !inTg) {
     fetch(API + '?a=cfg&s=' + encodeURIComponent(start))
       .then(function (r) { return r.json(); })
       .then(function (c) { if (c && c.ok) { pointName = c.point; subline(); } })
