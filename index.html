@@ -85,13 +85,13 @@
   <div class="group-title">В закупку</div>
   <div class="card">
     <div class="f"><div class="lbl">На стопе <span class="tag">→ заявка</span></div>
-      <div class="hint">Чего нет совсем. Через запятую или с новой строки. Пример: микрозелень, овсяное молоко</div>
+      <div class="hint">Чего нет совсем. Через запятую или с новой строки. Пример: <span class="ex" data-k="микрозелень, авокадо" data-b="декаф, овсяное молоко">микрозелень, авокадо</span></div>
       <textarea data-k="stop" rows="1"></textarea></div>
     <div class="f"><div class="lbl">Мало <span class="tag">→ заявка</span></div>
-      <div class="hint">Что заканчивается. Только названия, без остатка. Пример: лабне, фета. Сколько заказать, пишите в «Надо».</div>
+      <div class="hint">Что заканчивается. Только названия, без остатка. Пример: <span class="ex" data-k="лабне, фета" data-b="апельсины, тоник">лабне, фета</span>. Сколько заказать, пишите в «Надо».</div>
       <textarea data-k="low" rows="1"></textarea></div>
     <div class="f"><div class="lbl">Надо <span class="tag">→ заявка</span></div>
-      <div class="hint">Что заказать или купить, можно с количеством. Пример: яйца 60, сметана 2</div>
+      <div class="hint">Что заказать или купить, можно с количеством. Пример: <span class="ex" data-k="яйца 60, сметана 2" data-b="молоко 12, стаканы 02 50 шт">яйца 60, сметана 2</span></div>
       <textarea data-k="need" rows="1"></textarea></div>
   </div>
 
@@ -118,7 +118,7 @@
       <textarea data-k="morning" rows="1"></textarea></div>
 
     <div class="f"><div class="lbl">Списание</div>
-      <div class="hint">Что, сколько и почему. Пример: тарт 1 (срок), вафля 2 (брак)</div>
+      <div class="hint">Что, сколько и почему. Пример: <span class="ex" data-k="блин 1, вафля 2 (брак)" data-b="тарт 1 (срок), фильтр 300 мл (остался)">блин 1, вафля 2 (брак)</span></div>
       <textarea data-k="wo" rows="1"></textarea></div>
     <div class="f k-only"><div class="lbl">Стафф</div>
       <div class="hint">Что съели сотрудники. Пример: драники 1, скрембл 1</div>
@@ -211,6 +211,7 @@
     document.body.classList.toggle('bar', s === 'b');
     $$('.tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.shop === s); });
     $('#title').textContent = s === 'k' ? 'Отчёт кухни' : 'Отчёт бара';
+    $$('.ex').forEach(function (e) { e.textContent = s === 'k' ? e.dataset.k : e.dataset.b; });
     load();
     requestAnimationFrame(function () { $$('textarea').forEach(grow); });
   }
