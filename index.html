@@ -118,6 +118,9 @@
         <div class="seg" data-seg="holl"><button type="button">есть</button><button type="button">мало</button><button type="button">нет</button></div>
       </div>
     </div>
+    <div class="f k-only"><div class="lbl">Что сделали по заготовкам</div>
+      <div class="hint">Что приготовили за смену и сколько. Пример: томатка 2 конт, сырники 20 порций, перцы 1 конт</div>
+      <textarea data-k="prepdone" rows="1"></textarea></div>
     <div class="f k-only"><div class="lbl">Сделать с утра</div>
       <div class="hint">Что первым делом сделать утренней смене. Пример: голландез, пашоты</div>
       <textarea data-k="morning" rows="1"></textarea></div>
@@ -234,7 +237,7 @@
     if (r && r.editable) t = '✏️ Отчёт ' + who + ' за сегодня уже отправлен в ' + r.at + (r.author ? ' (' + r.author + ')' : '') +
       '. Сейчас вы его исправляете: после сохранения бот обновит отчёт в чате и заявку.';
     else if (r) t = 'Отчёт ' + who + ' за сегодня уже отправлен в ' + r.at + (r.author ? ' (' + r.author + ')' : '') + '. ' + r.reason +
-      ' Исправления напишите ответом на карточку заявки. При необходимости можно отправить ещё один отчёт.';
+      ' Исправления напишите ответом на сообщение с отчётом в чате. При необходимости можно отправить ещё один отчёт.';
     box.textContent = t; box.classList.toggle('show', !!t);
     $('#send').textContent = btnText();
     if (tg && tg.MainButton && inTg) { try { tg.MainButton.setParams({ text: btnText() }); } catch (e) {} }
