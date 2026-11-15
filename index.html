@@ -69,6 +69,18 @@
   .done h2 { margin: 10px 0 6px; }
   body.sent main > *:not(.done) { display: none; }
   body.sent .done { display: block; }
+  .req { color: var(--danger); font-weight: 600; }
+  .bad, textarea.bad, input.bad { border-color: var(--danger) !important; background: color-mix(in srgb, var(--danger) 8%, var(--field)); }
+  .seg.bad { outline: 1px solid var(--danger); border-radius: 10px; }
+  .photos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+  .photos:empty { display: none; }
+  .ph { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: var(--field); }
+  .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ph button { position: absolute; top: 3px; right: 3px; width: 24px; height: 24px; border-radius: 12px; border: 0;
+    background: rgba(0,0,0,.55); color: #fff; font-size: 15px; line-height: 24px; padding: 0; cursor: pointer; }
+  .addph { width: 100%; border: 1px dashed var(--line); background: var(--field); color: var(--link); font: inherit; font-weight: 600;
+    border-radius: 10px; padding: 12px; cursor: pointer; }
+  #phfile { display: none; }
 </style>
 </head>
 <body class="kitchen">
@@ -106,17 +118,30 @@
       <div class="hint">Остаток на витрине, штук. Пример: шу 2, пирог 5, трубочки 4</div>
       <textarea data-k="pastry" rows="1"></textarea></div>
 
-    <div class="f k-only"><div class="lbl">Заготовки на утро</div>
-      <div class="hint">Сколько готово к утру. Пустое поле значит «не проверяли».</div>
+    <div class="f k-only"><div class="lbl">Заготовки на утро <span class="req">обязательно</span></div>
+      <div class="hint">Сколько готово к утру. Если нет, пишите 0.</div>
       <div class="preps">
         <label class="prep"><span>Пашоты, шт</span><input type="text" inputmode="decimal" data-k="pashot"></label>
         <label class="prep"><span>Сырники, порций</span><input type="text" inputmode="decimal" data-k="syr"></label>
         <label class="prep"><span>Томатка, контейнеров</span><input type="text" inputmode="decimal" data-k="tomat"></label>
         <label class="prep"><span>Перцы, контейнеров</span><input type="text" inputmode="decimal" data-k="perc"></label>
+        <label class="prep"><span>Тесто на вафли, контейнеров</span><input type="text" inputmode="decimal" data-k="waffle"></label>
       </div>
       <div class="prep" style="margin-top:10px"><span>Голландез</span>
         <div class="seg" data-seg="holl"><button type="button">есть</button><button type="button">мало</button><button type="button">нет</button></div>
       </div>
+    </div>
+    <div class="f k-only"><div class="lbl">Остатки основных продуктов <span class="req">обязательно</span></div>
+      <div class="hint">Сколько осталось на конец смены. Если нет, пишите 0.</div>
+      <div class="preps">
+        <label class="prep"><span>Яйца, шт</span><input type="text" inputmode="decimal" data-k="st_eggs"></label>
+        <label class="prep"><span>Авокадо, шт</span><input type="text" inputmode="decimal" data-k="st_avo"></label>
+        <label class="prep"><span>Салат, кг</span><input type="text" inputmode="decimal" data-k="st_salad"></label>
+      </div>
+      <div class="prep" style="margin-top:10px"><span>Фрукты и ягоды: что есть и сколько</span>
+        <textarea data-k="st_fruit" rows="1"></textarea>
+        </div>
+      <div class="hint" style="margin:4px 0 0">Пример: киви 3, клубника 200 г, бананы 2. Если фруктов нет, пишите 0.</div>
     </div>
     <div class="f k-only"><div class="lbl">Что сделали по заготовкам</div>
       <div class="hint">Что приготовили за смену и сколько. Пример: томатка 2 конт, сырники 20 порций, перцы 1 конт</div>
@@ -135,6 +160,15 @@
       <div class="hint">Обычная уборка: «база». Если сделали больше, допишите.</div>
       <textarea data-k="clean" rows="1"></textarea>
       <div class="chips"><button type="button" class="chip" data-fill="clean" data-val="база">база</button></div></div>
+  </div>
+
+  <div class="group-title k-only">Фото</div>
+  <div class="card k-only">
+    <div class="f"><div class="lbl">Содержимое холодильников</div>
+      <div class="hint">Откройте каждый холодильник и сфотографируйте так, чтобы была видна каждая полка. Можно снять сразу или выбрать из галереи, несколько фото.</div>
+      <button type="button" class="addph" id="addph">📷 Добавить фото</button>
+      <input type="file" id="phfile" accept="image/*" multiple>
+      <div class="photos" id="photos"></div></div>
   </div>
 
   <div class="group-title">Важно</div>
@@ -175,6 +209,10 @@
   var dayKey = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
   var $ = function (s) { return document.querySelector(s); };
   var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var photos = [];           // сжатые фото холодильников (data URL JPEG), только кухня
+  var MAX_PHOTOS = 10;
+  var REQ_K = [['pashot', 'пашоты'], ['syr', 'сырники'], ['tomat', 'томатка'], ['perc', 'перцы'], ['waffle', 'тесто на вафли'],
+    ['holl', 'голландез'], ['st_eggs', 'яйца'], ['st_avo', 'авокадо'], ['st_salad', 'салат'], ['st_fruit', 'фрукты']];
 
   if (tg) { try { tg.ready(); tg.expand(); } catch (e) {} }
   if (!inTg) document.body.classList.add('web');
@@ -268,7 +306,8 @@
     showErr('');
     setBusy(true);
     var ed = editing();
-    var body = JSON.stringify({ kind: 'kjform', initData: tg.initData, shop: shop, fields: fields(), nonce: nonce(), edit: ed ? ed.msg : 0 });
+    var pics = shop === 'k' ? photos.map(function (p) { return p.split(',')[1]; }) : [];
+    var body = JSON.stringify({ kind: 'kjform', initData: tg.initData, shop: shop, fields: fields(), nonce: nonce(), edit: ed ? ed.msg : 0, photos: pics });
     fetch(API, { method: 'POST', body: body, redirect: 'follow' })
       .then(function (r) { return r.json(); })
       .then(function (res) {
@@ -279,6 +318,7 @@
           return;
         }
         var s = store(); if (s) try { s.removeItem(draftKey()); s.removeItem(draftKey() + ':nonce'); } catch (e) {}
+        photos = []; drawPhotos();
         try { tg.disableClosingConfirmation(); } catch (e) {}
         if (res.edited) {
           $('#doneTitle').textContent = 'Отчёт исправлен';
@@ -286,7 +326,8 @@
             (res.added || res.removed ? ' В заявке добавлено позиций: ' + (res.added || 0) + ', убрано: ' + (res.removed || 0) + '.' : '');
         } else {
           $('#doneText').textContent = 'Отчёт появился в чате ' + (res.point || 'точки') + '.' +
-            (res.items ? ' В закупку ушло позиций: ' + res.items + '.' : '');
+            (res.items ? ' В закупку ушло позиций: ' + res.items + '.' : '') +
+            (shop === 'k' ? (res.photos ? ' Фото: ' + res.photos + '.' : ' Фото не приложены: пришлите их в чат ответом на отчёт.') : '');
         }
         document.body.classList.add('sent');
         try { tg.MainButton.hide(); tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
@@ -295,7 +336,29 @@
       .catch(function () { setBusy(false); showErr('Нет связи с ботом. Проверьте интернет и нажмите «Отправить» ещё раз, введённое сохранено.'); });
   }
 
+  // Обязательные поля кухни: заготовки и остатки. «0» допустим, пустое нет.
+  function missing() {
+    if (shop !== 'k') return [];
+    var f = fields(), out = [];
+    $$('.bad').forEach(function (el) { el.classList.remove('bad'); });
+    REQ_K.forEach(function (r) {
+      if (String(f[r[0]] || '').trim() !== '') return;
+      out.push(r[1]);
+      var el = r[0] === 'holl' ? $('[data-seg="holl"]') : $('[data-k="' + r[0] + '"]');
+      if (el) el.classList.add('bad');
+    });
+    return out;
+  }
+
   function submit() {
+    var miss = missing();
+    if (miss.length) {
+      var first = $('.bad');
+      showErr('Заполните заготовки и остатки: ' + miss.join(', ') + '. Если чего-то нет, поставьте 0.');
+      if (first) setTimeout(function () { first.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 250);
+      try { tg.HapticFeedback.notificationOccurred('error'); } catch (e) {}
+      return;
+    }
     if (isEmpty(fields())) {
       var q = 'Все поля пустые. Отправить отчёт «Без замечаний»?';
       if (tg && tg.showConfirm && inTg) { try { tg.showConfirm(q, function (ok) { if (ok) doSend(); }); return; } catch (e) {} }
@@ -304,14 +367,52 @@
     doSend();
   }
 
+  // фото: уменьшаем до 1600 px по длинной стороне, JPEG, чтобы отправка шла быстро
+  function shrink(file) {
+    return new Promise(function (resolve) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', 0.72));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  function drawPhotos() {
+    var box = $('#photos'); box.innerHTML = '';
+    photos.forEach(function (p, i) {
+      var d = document.createElement('div'); d.className = 'ph';
+      var im = document.createElement('img'); im.src = p; d.appendChild(im);
+      var x = document.createElement('button'); x.type = 'button'; x.textContent = '×';
+      x.addEventListener('click', function () { photos.splice(i, 1); drawPhotos(); });
+      d.appendChild(x); box.appendChild(d);
+    });
+    $('#addph').textContent = photos.length ? '📷 Добавить ещё (' + photos.length + ' из ' + MAX_PHOTOS + ')' : '📷 Добавить фото';
+    $('#addph').disabled = photos.length >= MAX_PHOTOS;
+  }
+  $('#addph').addEventListener('click', function () { $('#phfile').click(); });
+  $('#phfile').addEventListener('change', function (e) {
+    var files = Array.prototype.slice.call(e.target.files || []).slice(0, MAX_PHOTOS - photos.length);
+    if (!files.length) return;
+    $('#addph').textContent = 'Обрабатываю фото…';
+    files.reduce(function (pr, f) { return pr.then(function () { return shrink(f).then(function (d) { if (d) photos.push(d); }); }); }, Promise.resolve())
+      .then(function () { e.target.value = ''; drawPhotos(); });
+  });
+
   // события
   $$('.tabs button').forEach(function (b) { b.addEventListener('click', function () { setShop(b.dataset.shop); }); });
-  document.addEventListener('input', function (e) { if (e.target.dataset && e.target.dataset.k) { grow(e.target); save(); } });
+  document.addEventListener('input', function (e) { if (e.target.dataset && e.target.dataset.k) { grow(e.target); e.target.classList.remove('bad'); save(); } });
   $$('[data-seg] button').forEach(function (b) {
     b.addEventListener('click', function () {
       var was = b.classList.contains('on');
       $$('[data-seg="' + b.parentNode.dataset.seg + '"] button').forEach(function (x) { x.classList.remove('on'); });
       if (!was) b.classList.add('on');
+      b.parentNode.classList.remove('bad');
       save();
     });
   });
