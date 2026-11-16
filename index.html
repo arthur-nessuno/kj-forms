@@ -352,6 +352,14 @@
 
   function submit() {
     var miss = missing();
+    var sal = shop === 'k' ? Number(String(fields().st_salad || '').replace(',', '.')) : 0;
+    if (!miss.length && sal > 20) {
+      var se = $('[data-k="st_salad"]'); se.classList.add('bad');
+      showErr('Салат указывается в килограммах. Похоже, вы написали граммы: например, 550 г это 0,55.');
+      setTimeout(function () { se.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 250);
+      try { tg.HapticFeedback.notificationOccurred('error'); } catch (e) {}
+      return;
+    }
     if (miss.length) {
       var first = $('.bad');
       showErr('Заполните заготовки и остатки: ' + miss.join(', ') + '. Если чего-то нет, поставьте 0.');
